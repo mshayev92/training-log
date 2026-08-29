@@ -235,6 +235,8 @@ const CSS = `
 .tl-chip{border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:999px;
   padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;}
 .tl-chip.on{background:var(--gold);color:#14161a;border-color:var(--gold);}
+.tl-chip.tl-danger{color:var(--red);border-color:var(--red);}
+.tl-chip.tl-danger.armed{background:var(--red);color:#fff;border-color:var(--red);}
 .tl-btn{width:100%;background:var(--gold);color:#14161a;border:none;border-radius:10px;
   padding:15px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.01em;}
 .tl-btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);}
@@ -267,6 +269,7 @@ export default function TrainingLog() {
   const [view, setView] = useState("home");
   const [openDay, setOpenDay] = useState(null);
   const [openHist, setOpenHist] = useState(null);
+  const [armedDel, setArmedDel] = useState(null);
   const [timer, setTimer] = useState(0);
   const saveRef = useRef(null);
 
@@ -534,8 +537,13 @@ export default function TrainingLog() {
             .map(([k, l]) => {
               const d = [...PROGRAM.p0, ...PROGRAM.p1, RETEST].find((x) => x.id === l.dayId);
               const open = openHist === k;
+              const armed = armedDel === k;
               return (
-                <div className="tl-hrow" key={k} onClick={() => setOpenHist(open ? null : k)}>
+                <div
+                  className="tl-hrow"
+                  key={k}
+                  onClick={() => { setOpenHist(open ? null : k); setArmedDel(null); }}
+                >
                   <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
                     <div style={{ fontWeight: 700 }}>{d?.name || l.dayId}</div>
                     <div className="tl-eyebrow">W{l.week}</div>
@@ -556,6 +564,20 @@ export default function TrainingLog() {
                         );
                       })}
                       {l.note && <div className="tl-exnote" style={{ marginTop: 8 }}>{l.note}</div>}
+                      <button
+                        className={`tl-chip tl-danger ${armed ? "armed" : ""}`}
+                        style={{ marginTop: 12 }}
+                        onClick={(e) => {
+                          // The row itself toggles open/closed; don't do both.
+                          e.stopPropagation();
+                          if (!armed) return setArmedDel(k);
+                          upd((n) => { delete n.logs[k]; });
+                          setArmedDel(null);
+                          setOpenHist(null);
+                        }}
+                      >
+                        {armed ? "Tap again to delete" : "Delete session"}
+                      </button>
                     </div>
                   )}
                 </div>
