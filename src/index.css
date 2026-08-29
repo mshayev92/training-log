@@ -1,0 +1,73 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  /* Matches --ink so overscroll rubber-banding on iOS doesn't flash white. */
+  background: #14161a;
+  overscroll-behavior-y: none;
+}
+
+body {
+  /* Fills the notch area when launched from the home screen. */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Taps shouldn't paint the grey highlight box on a chrome-less app. */
+button,
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- service worker toast ---- */
+.tl-toast {
+  position: fixed;
+  top: calc(8px + env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #ffd520;
+  border-radius: 12px;
+  background: #1d2026;
+  color: #ece9e4;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
+}
+
+.tl-toast-msg {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tl-toast-btn {
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 13px;
+  background: #ffd520;
+  color: #14161a;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tl-toast-btn.ghost {
+  background: transparent;
+  color: #868e99;
+  border: 1px solid #2f343d;
+}
