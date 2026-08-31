@@ -94,8 +94,8 @@ const PROGRAM = {
       name: "Lower A",
       tag: "Squat",
       ex: [
-        { id: "bsq", n: "Back squat", s: "4 × 5–8", t: LIFT, rest: 180 },
-        { id: "lpress", n: "Leg press", s: "3 × 10–12", t: LIFT, rest: 90 },
+        { id: "bsq", n: "Back squat", s: "4 × 5–8", t: LIFT, rest: 180, keep: true },
+        { id: "lpress", n: "Leg press", s: "3 × 10–12", t: LIFT, rest: 90, keep: true },
         { id: "dbrdl", n: "DB Romanian deadlift", s: "3 × 8–10", t: LIFT, rest: 90 },
         { id: "lcurl", n: "Leg curl", s: "3 × 10–12", t: LIFT, rest: 60 },
         { id: "calf", n: "Standing calf raise", s: "3 × 12–15", t: LIFT, rest: 60 },
@@ -108,10 +108,10 @@ const PROGRAM = {
       tag: "Press and vertical pull",
       tip: "Superset the last three.",
       ex: [
-        { id: "bench", n: "Bench press", s: "4 × 5–8", t: LIFT, rest: 180, note: "In a rack with safeties at chest height, or dumbbells. Never to failure" },
-        { id: "incdb", n: "Incline DB press", s: "3 × 8–12", t: LIFT, rest: 90 },
+        { id: "bench", n: "Bench press", s: "4 × 5–8", t: LIFT, rest: 180, keep: true, note: "In a rack with safeties at chest height, or dumbbells. Never to failure" },
+        { id: "incdb", n: "Incline DB press", s: "3 × 8–12", t: LIFT, rest: 90, keep: true },
         { id: "csrow", n: "Chest-supported row", s: "3 × 8–12", t: LIFT, rest: 90 },
-        { id: "pulldown", n: "Lat pulldown", s: "3 × 8–12", t: LIFT, rest: 90 },
+        { id: "pulldown", n: "Lat pulldown", s: "3 × 8–12", t: LIFT, rest: 90, keep: true },
         { id: "lat", n: "Lateral raise", s: "3 × 12–15", t: LIFT, rest: 45 },
         { id: "tpush", n: "Triceps pushdown", s: "3 × 10–15", t: LIFT, rest: 45 },
         { id: "dbcurl", n: "DB curl", s: "3 × 10–12", t: LIFT, rest: 45 },
@@ -162,23 +162,41 @@ const PROGRAM = {
   ],
 };
 
-const RETEST = {
-  id: "retest",
-  name: "Retest",
-  tag: "Week 10 · Thu/Fri",
+/*
+ * Testing is split across two days. A squat 5RM and a bench 5RM in the same
+ * session gives you one honest number and one distorted by the first, and
+ * lower goes first because fatigue skews those two lifts most.
+ */
+
+const LOWER_TEST = {
+  id: "testLower",
+  name: "Lower tests",
+  tag: "Fri · squat then hinge",
   test: true,
+  cue: "72 hours since Tuesday. Warm up as normal, then squat — this is the number the block is judged on. Trap-bar after, fully rested.",
   ex: [
+    { id: "t_bw", n: "Bodyweight", s: "lb", t: TEST, note: "Morning, before eating" },
+    { id: "t_squat", n: "Back squat 5RM", s: "lb", t: TEST },
+    { id: "t_tbdl", n: "Trap-bar deadlift 5RM", s: "lb", t: TEST },
+  ],
+};
+
+const UPPER_TEST = {
+  id: "testUpper",
+  name: "Upper tests",
+  tag: "Sat · press, pull, run",
+  test: true,
+  cue: "Bench while you're fresh, then the pull-up max, then push-ups. The mile goes last — it costs you nothing that comes after it.",
+  ex: [
+    { id: "t_bench", n: "Bench 5RM (or DB 8RM)", s: "lb", t: TEST },
     { id: "t_pullup", n: "Max strict pull-ups", s: "reps", t: TEST },
     { id: "t_pushup", n: "Push-ups in 2 min", s: "reps", t: TEST },
     { id: "t_mile", n: "1-mile run", s: "mm:ss", t: TEST },
-    { id: "t_squat", n: "Back squat 5RM", s: "lb", t: TEST },
-    { id: "t_bench", n: "Bench 5RM (or DB 8RM)", s: "lb", t: TEST },
-    { id: "t_bw", n: "Bodyweight", s: "lb", t: TEST },
   ],
 };
 
 /* Every day that can appear in a log, for resolving history entries. */
-const ALL_DAYS = [...PROGRAM.intro, ...PROGRAM.build, RETEST];
+const ALL_DAYS = [...PROGRAM.intro, ...PROGRAM.build, LOWER_TEST, UPPER_TEST];
 
 const phaseForWeek = (w) =>
   w <= 2 ? "intro" : w === 3 ? "bridge" : w <= 9 ? "build" : "deload";
@@ -186,8 +204,10 @@ const phaseForWeek = (w) =>
 const daysForWeek = (w) => {
   const p = phaseForWeek(w);
   if (p === "intro") return PROGRAM.intro;
-  // Week 10 is Mon-Wed at half volume, then the retest Thu/Fri.
-  if (p === "deload") return [...PROGRAM.build.slice(0, 3), RETEST];
+  // Week 10: Mon/Tue reduced, Wed/Thu off, then test Fri/Sat. Two light
+  // sessions plus two test days is four — the normal week — and the 72 hours
+  // before Friday is what makes the squat number trustworthy.
+  if (p === "deload") return [...PROGRAM.build.slice(0, 2), LOWER_TEST, UPPER_TEST];
   return PROGRAM.build; // bridge runs the build selection, one set lighter
 };
 
@@ -204,7 +224,8 @@ const PHASE_CUE = {
   bridge:
     "Phase 1 exercises at one set fewer, still 3 RIR. The sets below are already reduced.",
   build: "Compounds to ~2 reps in reserve. Accessories 1–2.",
-  deload: "Same weights, half the sets. The sets below are already halved.",
+  deload:
+    "Same weights, fewer sets. Compounds you are about to test hold two sets, everything else drops to one. The rows below are already reduced.",
 };
 
 const setCount = (s) => {
@@ -218,13 +239,28 @@ const setCount = (s) => {
  * there's no arithmetic to get wrong mid-session.
  */
 const daySetCount = (day, week) =>
-  day.ex.reduce((n, e) => n + (e.t === LIFT ? setsForWeek(e.s, week) : 0), 0);
+  day.ex.reduce((n, e) => n + (e.t === LIFT ? setsForWeek(e, week) : 0), 0);
 
-const setsForWeek = (scheme, week) => {
-  const base = setCount(scheme);
+/*
+ * Week 3 drops a set from every exercise; week 10 halves them. Doing this here
+ * rather than in a banner means the rows on screen are the work, so there's no
+ * arithmetic to get wrong mid-session.
+ *
+ * The deload splits by what the week is for. A pre-test deload has to shed
+ * fatigue without letting the pattern go cold: exercises marked `keep` train
+ * something being tested that Friday or Saturday, so they hold two sets, and
+ * everything else rounds down to one. Isolation work contributes nothing to a
+ * 5RM and generates most of the residual soreness, so it is the right thing to
+ * strip. Rounding everything up instead lands near 63% of normal volume, which
+ * is not a deload.
+ */
+const setsForWeek = (ex, week) => {
+  const base = setCount(ex.s);
   const p = phaseForWeek(week);
   if (p === "bridge") return Math.max(base - 1, 1);
-  if (p === "deload") return Math.max(Math.ceil(base / 2), 1);
+  if (p === "deload") {
+    return ex.keep ? Math.max(Math.ceil(base / 2), 2) : Math.max(Math.floor(base / 2), 1);
+  }
   return base;
 };
 
@@ -440,8 +476,8 @@ export default function TrainingLog() {
             </div>
           </div>
 
-          {!day.athletic && !day.test && (
-            <div className="tl-banner">{PHASE_CUE[phase]}</div>
+          {!day.athletic && (
+            <div className="tl-banner">{day.cue || PHASE_CUE[phase]}</div>
           )}
 
           {day.ex.map((ex, i) => {
@@ -468,7 +504,7 @@ export default function TrainingLog() {
                 {ex.t === LIFT && (
                   <>
                     <div className="tl-sets">
-                      {Array.from({ length: setsForWeek(ex.s, week) }).map((_, idx) => (
+                      {Array.from({ length: setsForWeek(ex, week) }).map((_, idx) => (
                         <div className="tl-setrow" key={idx}>
                           <div className="tl-setno tl-mono">{idx + 1}</div>
                           <input
