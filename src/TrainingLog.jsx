@@ -111,7 +111,17 @@ const PROGRAM = {
         { id: "bench", n: "Bench press", s: "4 × 5–8", t: LIFT, rest: 180, keep: true, note: "In a rack with safeties at chest height, or dumbbells. Never to failure" },
         { id: "incdb", n: "Incline DB press", s: "3 × 8–12", t: LIFT, rest: 90, keep: true },
         { id: "csrow", n: "Chest-supported row", s: "3 × 8–12", t: LIFT, rest: 90 },
-        { id: "pulldown", n: "Lat pulldown", s: "3 × 8–12", t: LIFT, rest: 90, keep: true },
+        {
+          id: "pulldown", n: "Lat pulldown", s: "3 × 8–12", t: LIFT, rest: 90, keep: true,
+          // Saturday of week 10 tests a pull-up max, so the deload trains the
+          // pattern itself rather than an approximation of it.
+          deload: {
+            id: "pullup",
+            n: "Pull-ups",
+            s: "2 × 4–5",
+            note: "Submaximal. Well short of failure — this keeps the pattern warm, it is not training",
+          },
+        },
         { id: "lat", n: "Lateral raise", s: "3 × 12–15", t: LIFT, rest: 45 },
         { id: "tpush", n: "Triceps pushdown", s: "3 × 10–15", t: LIFT, rest: 45 },
         { id: "dbcurl", n: "DB curl", s: "3 × 10–12", t: LIFT, rest: 45 },
@@ -175,7 +185,7 @@ const LOWER_TEST = {
   test: true,
   cue: "72 hours since Tuesday. Warm up as normal, then squat — this is the number the block is judged on. Trap-bar after, fully rested.",
   ex: [
-    { id: "t_bw", n: "Bodyweight", s: "lb", t: TEST, note: "Morning, before eating" },
+    { id: "t_bw", n: "Bodyweight — 7-day average", s: "lb", t: TEST, note: "Average this week's morning weigh-ins. A single reading is noise" },
     { id: "t_squat", n: "Back squat 5RM", s: "lb", t: TEST },
     { id: "t_tbdl", n: "Trap-bar deadlift 5RM", s: "lb", t: TEST },
   ],
@@ -184,22 +194,38 @@ const LOWER_TEST = {
 const UPPER_TEST = {
   id: "testUpper",
   name: "Upper tests",
-  tag: "Sat · press, pull, run",
+  tag: "Sat · press then pull",
   test: true,
-  cue: "Bench while you're fresh, then the pull-up max, then push-ups. The mile goes last — it costs you nothing that comes after it.",
+  cue: "Bench while you're fresh, then the pull-up max. Nothing else today — both numbers are worth protecting.",
   ex: [
     { id: "t_bench", n: "Bench 5RM (or DB 8RM)", s: "lb", t: TEST },
     { id: "t_pullup", n: "Max strict pull-ups", s: "reps", t: TEST },
+  ],
+};
+
+/*
+ * Conditioning moves to the Monday after, so a hard 2-minute set and a mile
+ * are not run on legs and lungs still carrying Friday and Saturday.
+ */
+const COND_TEST = {
+  id: "testCond",
+  name: "Conditioning tests",
+  tag: "Mon · push-ups then mile",
+  test: true,
+  cue: "48 hours after Saturday. Push-ups first, then the mile — the run is the one thing that costs nothing coming after it.",
+  ex: [
     { id: "t_pushup", n: "Push-ups in 2 min", s: "reps", t: TEST },
     { id: "t_mile", n: "1-mile run", s: "mm:ss", t: TEST },
   ],
 };
 
 /* Every day that can appear in a log, for resolving history entries. */
-const ALL_DAYS = [...PROGRAM.intro, ...PROGRAM.build, LOWER_TEST, UPPER_TEST];
+const ALL_DAYS = [...PROGRAM.intro, ...PROGRAM.build, LOWER_TEST, UPPER_TEST, COND_TEST];
+
+const WEEKS = 11;
 
 const phaseForWeek = (w) =>
-  w <= 2 ? "intro" : w === 3 ? "bridge" : w <= 9 ? "build" : "deload";
+  w <= 2 ? "intro" : w === 3 ? "bridge" : w <= 9 ? "build" : w === 10 ? "deload" : "cond";
 
 const daysForWeek = (w) => {
   const p = phaseForWeek(w);
@@ -208,6 +234,7 @@ const daysForWeek = (w) => {
   // sessions plus two test days is four — the normal week — and the 72 hours
   // before Friday is what makes the squat number trustworthy.
   if (p === "deload") return [...PROGRAM.build.slice(0, 2), LOWER_TEST, UPPER_TEST];
+  if (p === "cond") return [COND_TEST];
   return PROGRAM.build; // bridge runs the build selection, one set lighter
 };
 
@@ -216,6 +243,7 @@ const PHASE_LABEL = {
   bridge: "Week 3 — Bridge",
   build: "Weeks 4–9 — Build",
   deload: "Week 10 — Deload + retest",
+  cond: "Week 11 — Conditioning tests",
 };
 
 const PHASE_CUE = {
@@ -238,8 +266,15 @@ const setCount = (s) => {
  * here rather than in a banner means the row count on screen is the work, so
  * there's no arithmetic to get wrong mid-session.
  */
+/* Some exercises are substituted for the deload week rather than reduced. */
+const exForWeek = (ex, week) =>
+  phaseForWeek(week) === "deload" && ex.deload ? { ...ex, ...ex.deload } : ex;
+
 const daySetCount = (day, week) =>
-  day.ex.reduce((n, e) => n + (e.t === LIFT ? setsForWeek(e, week) : 0), 0);
+  day.ex.reduce((n, e) => {
+    const ex = exForWeek(e, week);
+    return n + (ex.t === LIFT ? setsForWeek(ex, week) : 0);
+  }, 0);
 
 /*
  * Week 3 drops a set from every exercise; week 10 halves them. Doing this here
@@ -327,6 +362,9 @@ const CSS = `
   padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;}
 .tl-chip.on{background:var(--gold);color:#14161a;border-color:var(--gold);}
 .tl-chip.tl-danger{color:var(--red);border-color:var(--red);}
+.tl-msg{font-size:13px;line-height:1.5;margin-top:10px;}
+.tl-msg.ok{color:var(--gold);}
+.tl-msg.err{color:var(--red);}
 .tl-chip.tl-danger.armed{background:var(--red);color:#fff;border-color:var(--red);}
 .tl-btn{width:100%;background:var(--gold);color:#14161a;border:none;border-radius:10px;
   padding:15px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.01em;}
@@ -480,7 +518,8 @@ export default function TrainingLog() {
             <div className="tl-banner">{day.cue || PHASE_CUE[phase]}</div>
           )}
 
-          {day.ex.map((ex, i) => {
+          {day.ex.map((rawEx, i) => {
+            const ex = exForWeek(rawEx, week);
             const cur = session?.ex?.[ex.id] || { sets: [], rir: "", note: "", done: false };
             const last = lastFor(ex.id, sKey);
             return (
@@ -586,7 +625,7 @@ export default function TrainingLog() {
             <div className="tl-title">Training log</div>
           </div>
           <div className="tl-weekbar">
-            {Array.from({ length: 10 }).map((_, i) => (
+            {Array.from({ length: WEEKS }).map((_, i) => (
               <button
                 key={i}
                 className={`tl-wk ${week === i + 1 ? "on" : ""}`}
@@ -689,6 +728,9 @@ export default function TrainingLog() {
         <NotesTab data={data} upd={upd} />
       )}
 
+      {/* ---------------- DATA ---------------- */}
+      {view === "data" && <DataTab data={data} setData={setData} />}
+
       {/* ---------------- TIMER ---------------- */}
       {timer > 0 && (
         <div className="tl-timer">
@@ -701,7 +743,7 @@ export default function TrainingLog() {
 
       {/* ---------------- TABS ---------------- */}
       <div className="tl-tabs">
-        {[["home", "Train"], ["history", "History"], ["body", "Weight"], ["notes", "Notes"]].map(([id, label]) => (
+        {[["home", "Train"], ["history", "History"], ["body", "Weight"], ["notes", "Notes"], ["data", "Data"]].map(([id, label]) => (
           <button
             key={id}
             className={`tl-tab ${view === id ? "on" : ""}`}
@@ -835,6 +877,165 @@ function NotesTab({ data, upd }) {
           >Delete</button>
         </div>
       ))}
+    </>
+  );
+}
+
+/* ========================= EXPORT AND IMPORT ========================= */
+
+const EXPORT_VERSION = 1;
+
+const countOf = (d) => ({
+  sessions: Object.keys(d?.logs || {}).length,
+  weighins: (d?.bw || []).length,
+  notes: (d?.notes || []).length,
+});
+
+const describe = (c) =>
+  `${c.sessions} session${c.sessions === 1 ? "" : "s"} · ${c.weighins} weigh-in${
+    c.weighins === 1 ? "" : "s"
+  } · ${c.notes} note${c.notes === 1 ? "" : "s"}`;
+
+/*
+ * The log lives in one browser's storage, which a cleared cache or a new phone
+ * wipes without warning. This is the only way out of that, so it leans on three
+ * routes to get the file off the device: the share sheet (the one that works
+ * reliably in an installed app on iOS), a download, and the clipboard.
+ */
+function DataTab({ data, setData }) {
+  const [msg, setMsg] = useState(null);
+  const [pending, setPending] = useState(null);
+  const fileRef = useRef(null);
+
+  const here = countOf(data);
+  const filename = `training-log-${todayISO()}.json`;
+  const payload = () =>
+    JSON.stringify({ app: "training-log", version: EXPORT_VERSION, exported: todayISO(), data }, null, 2);
+
+  const share = async () => {
+    const text = payload();
+    try {
+      const file = new File([text], filename, { type: "application/json" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Training log backup" });
+        return setMsg({ kind: "ok", text: "Sent to the share sheet." });
+      }
+    } catch (e) {
+      if (e?.name === "AbortError") return; // dismissed the sheet
+    }
+    try {
+      const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setMsg({ kind: "ok", text: `Saved ${filename}` });
+    } catch {
+      setMsg({ kind: "err", text: "Couldn't save a file here. Try Copy instead." });
+    }
+  };
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(payload());
+      setMsg({ kind: "ok", text: "Copied. Paste it somewhere it will survive." });
+    } catch {
+      setMsg({ kind: "err", text: "Couldn't reach the clipboard. Use Export instead." });
+    }
+  };
+
+  const pick = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = ""; // so the same file can be chosen twice
+    if (!f) return;
+    const r = new FileReader();
+    r.onerror = () => setMsg({ kind: "err", text: "Couldn't read that file." });
+    r.onload = () => {
+      try {
+        const parsed = JSON.parse(r.result);
+        const d = parsed?.data ?? parsed;
+        if (!d || typeof d !== "object" || !d.logs || typeof d.logs !== "object") {
+          throw new Error("not a training log");
+        }
+        setPending({
+          logs: d.logs,
+          bw: Array.isArray(d.bw) ? d.bw : [],
+          notes: Array.isArray(d.notes) ? d.notes : [],
+          week: Number.isFinite(d.week) ? d.week : 1,
+        });
+        setMsg(null);
+      } catch {
+        setPending(null);
+        setMsg({ kind: "err", text: "That file isn't a training log backup." });
+      }
+    };
+    r.readAsText(f);
+  };
+
+  const restore = () => {
+    setData(pending);
+    setPending(null);
+    setMsg({ kind: "ok", text: "Restored." });
+  };
+
+  return (
+    <>
+      <div className="tl-head">
+        <div className="tl-eyebrow">Nothing here leaves your phone on its own</div>
+        <div className="tl-title">Data</div>
+      </div>
+
+      <div className="tl-stat">
+        <div className="tl-statbox">
+          <div className="tl-eyebrow">In this app</div>
+          <div className="tl-statval tl-mono">{here.sessions}</div>
+          <div className="tl-daytag">{describe(here)}</div>
+        </div>
+      </div>
+
+      <div className="tl-banner">
+        Your log lives in this browser's storage. Clearing site data or moving to
+        another phone loses it. Export after a session you'd hate to redo.
+      </div>
+
+      <div style={{ padding: "6px 18px 0" }}>
+        <div className="tl-eyebrow" style={{ marginBottom: 8 }}>Back up</div>
+        <button className="tl-btn" onClick={share}>Export backup file</button>
+        <div style={{ height: 8 }} />
+        <button className="tl-btn ghost" onClick={copy}>Copy as text</button>
+      </div>
+
+      <div style={{ padding: "22px 18px 0" }}>
+        <div className="tl-eyebrow" style={{ marginBottom: 8 }}>Restore</div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={pick}
+          style={{ display: "none" }}
+        />
+        <button className="tl-btn ghost" onClick={() => fileRef.current?.click()}>
+          Choose a backup file
+        </button>
+
+        {pending && (
+          <div className="tl-banner" style={{ margin: "12px 0 0" }}>
+            <div style={{ marginBottom: 4 }}>That file holds {describe(countOf(pending))}.</div>
+            <div className="tl-daytag">
+              Restoring replaces everything in the app right now — {describe(here)}.
+            </div>
+            <div className="tl-sub">
+              <button className="tl-chip tl-danger armed" onClick={restore}>Replace everything</button>
+              <button className="tl-chip" onClick={() => setPending(null)}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {msg && <div className={`tl-msg ${msg.kind}`}>{msg.text}</div>}
+      </div>
     </>
   );
 }

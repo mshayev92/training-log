@@ -50,6 +50,10 @@ BASE_PATH=/training-log/ npm run build
 ## Caveats
 
 - The log lives only in that browser's storage. Clearing site data, or
-  switching browsers or devices, loses it — there is no export or sync yet.
+  switching browsers or devices, loses it. The Data tab exports everything to a
+  JSON file and restores from one, but nothing syncs on its own — backing up is
+  a thing you have to remember to do.
+- Restoring replaces the whole log rather than merging, so the confirmation
+  names what is in the file and what is about to be overwritten.
 - `window.storage`, which the original single-file component expected from its
   host, is gone; `src/storage.js` provides the same async API.
