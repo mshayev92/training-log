@@ -94,7 +94,7 @@ const PROGRAM = {
       name: "Lower A",
       tag: "Squat",
       ex: [
-        { id: "bsq", n: "Back squat", s: "4 × 5–8", t: LIFT, rest: 180, keep: true },
+        { id: "bsq", n: "Back squat", s: "4 × 5–8", t: LIFT, rest: 180, keep: true, mainLift: true },
         { id: "lpress", n: "Leg press", s: "3 × 10–12", t: LIFT, rest: 90, keep: true },
         { id: "dbrdl", n: "DB Romanian deadlift", s: "3 × 8–10", t: LIFT, rest: 90 },
         { id: "lcurl", n: "Leg curl", s: "3 × 10–12", t: LIFT, rest: 60 },
@@ -108,7 +108,7 @@ const PROGRAM = {
       tag: "Press and vertical pull",
       tip: "Superset the last three.",
       ex: [
-        { id: "bench", n: "Bench press", s: "4 × 5–8", t: LIFT, rest: 180, keep: true, note: "In a rack with safeties at chest height, or dumbbells. Never to failure" },
+        { id: "bench", n: "Bench press", s: "4 × 5–8", t: LIFT, rest: 180, keep: true, mainLift: true, note: "In a rack with safeties at chest height, or dumbbells. Never to failure" },
         { id: "incdb", n: "Incline DB press", s: "3 × 8–12", t: LIFT, rest: 90, keep: true },
         { id: "csrow", n: "Chest-supported row", s: "3 × 8–12", t: LIFT, rest: 90 },
         {
@@ -132,7 +132,7 @@ const PROGRAM = {
       name: "Lower B",
       tag: "Hinge",
       ex: [
-        { id: "tbdl", n: "Trap-bar deadlift", s: "3 × 5", t: LIFT, rest: 180, note: "No chalk in RecWell. Mixed grip or straps — don't let this become grip training" },
+        { id: "tbdl", n: "Trap-bar deadlift", s: "3 × 5", t: LIFT, rest: 180, mainLift: true, note: "No chalk in RecWell. Mixed grip or straps — don't let this become grip training" },
         { id: "bss", n: "Bulgarian split squat", s: "3 × 8–10/leg", t: LIFT, rest: 90 },
         { id: "hthrust", n: "Hip thrust", s: "3 × 8–12", t: LIFT, rest: 90 },
         { id: "backext", n: "Back extension", s: "2 × 12", t: LIFT, rest: 60 },
@@ -146,10 +146,10 @@ const PROGRAM = {
       tag: "Pull and delts",
       tip: "Superset the last three.",
       ex: [
-        { id: "pullup", n: "Pull-ups", s: "4 × (max − 2)", t: LIFT, rest: 120, note: "Two short of failure every set. Add load once you can do 4 × 8 clean" },
+        { id: "pullup", n: "Pull-ups", s: "4 × (max − 2)", t: LIFT, rest: 120, mainLift: true, note: "Two short of failure every set. Add load once you can do 4 × 8 clean" },
         { id: "dips", n: "Dips or flat DB press", s: "3 × 8–12", t: LIFT, rest: 90 },
-        { id: "ohp", n: "Overhead press", s: "3 × 6–10", t: LIFT, rest: 120 },
-        { id: "brow", n: "Barbell row", s: "3 × 8–10", t: LIFT, rest: 90 },
+        { id: "ohp", n: "Overhead press", s: "3 × 6–10", t: LIFT, rest: 120, mainLift: true },
+        { id: "brow", n: "Barbell row", s: "3 × 8–10", t: LIFT, rest: 90, mainLift: true },
         { id: "clat", n: "Cable lateral raise", s: "3 × 12–15", t: LIFT, rest: 45 },
         { id: "hcurl", n: "Hammer curl", s: "3 × 12", t: LIFT, rest: 45 },
         { id: "facepull", n: "Face pull", s: "2 × 15", t: LIFT, rest: 45 },
@@ -177,6 +177,22 @@ const PROGRAM = {
  * session gives you one honest number and one distorted by the first, and
  * lower goes first because fatigue skews those two lifts most.
  */
+
+/*
+ * Saturday in week 7. Cutting sets in the gym and then sprinting on Saturday
+ * is not a deload, so the athletic day loses its intensity too.
+ */
+const ATHLETIC_LIGHT = {
+  id: "deloadAth",
+  name: "Athletic",
+  tag: "Sat · easy only",
+  athletic: true,
+  cue: "No sprints, no jumps, no sled this week. Easy jog and mobility only — this day is most of what makes the deload work.",
+  ex: [
+    { id: "jog1", n: "Easy jog", s: "15 min", t: DO, note: "Conversational pace. If you can't talk, slow down" },
+    { id: "drills", n: "Mobility: A-skips, high knees, carioca", s: "2 × 20m each", t: DO, note: "Easy effort — movement quality, not output" },
+  ],
+};
 
 const LOWER_TEST = {
   id: "testLower",
@@ -220,12 +236,19 @@ const COND_TEST = {
 };
 
 /* Every day that can appear in a log, for resolving history entries. */
-const ALL_DAYS = [...PROGRAM.intro, ...PROGRAM.build, LOWER_TEST, UPPER_TEST, COND_TEST];
+const ALL_DAYS = [
+  ...PROGRAM.intro, ...PROGRAM.build, ATHLETIC_LIGHT, LOWER_TEST, UPPER_TEST, COND_TEST,
+];
 
 const WEEKS = 11;
 
 const phaseForWeek = (w) =>
-  w <= 2 ? "intro" : w === 3 ? "bridge" : w <= 9 ? "build" : w === 10 ? "deload" : "cond";
+  w <= 2 ? "intro"
+    : w === 3 ? "bridge"
+    : w === 7 ? "midDeload"
+    : w <= 9 ? "build"
+    : w === 10 ? "deload"
+    : "cond";
 
 const daysForWeek = (w) => {
   const p = phaseForWeek(w);
@@ -234,16 +257,22 @@ const daysForWeek = (w) => {
   // sessions plus two test days is four — the normal week — and the 72 hours
   // before Friday is what makes the squat number trustworthy.
   if (p === "deload") return [...PROGRAM.build.slice(0, 2), LOWER_TEST, UPPER_TEST];
+  // Week 7 runs the full build week; only the volume and Saturday change.
+  if (p === "midDeload") return [...PROGRAM.build.slice(0, 4), ATHLETIC_LIGHT];
   if (p === "cond") return [COND_TEST];
   return PROGRAM.build; // bridge runs the build selection, one set lighter
 };
 
-const PHASE_LABEL = {
-  intro: "Weeks 1–2 — Reintroduction",
-  bridge: "Week 3 — Bridge",
-  build: "Weeks 4–9 — Build",
-  deload: "Week 10 — Deload + retest",
-  cond: "Week 11 — Conditioning tests",
+const phaseLabel = (w) => {
+  const p = phaseForWeek(w);
+  if (p === "build") return w <= 6 ? "Weeks 4–6 — Build" : "Weeks 8–9 — Build";
+  return {
+    intro: "Weeks 1–2 — Reintroduction",
+    bridge: "Week 3 — Bridge",
+    midDeload: "Week 7 — Deload",
+    deload: "Week 10 — Deload + retest",
+    cond: "Week 11 — Conditioning tests",
+  }[p];
 };
 
 const PHASE_CUE = {
@@ -252,6 +281,8 @@ const PHASE_CUE = {
   bridge:
     "Phase 1 exercises at one set fewer, still 3 RIR. The sets below are already reduced.",
   build: "Compounds to ~2 reps in reserve. Accessories 1–2.",
+  midDeload:
+    "Same weights as week 6 — only the volume drops. The main barbell lifts hold two sets, everything else falls to one. The rows below are already reduced.",
   deload:
     "Same weights, fewer sets. Compounds you are about to test hold two sets, everything else drops to one. The rows below are already reduced.",
 };
@@ -289,13 +320,18 @@ const daySetCount = (day, week) =>
  * strip. Rounding everything up instead lands near 63% of normal volume, which
  * is not a deload.
  */
+const halved = (base, hold) =>
+  hold ? Math.max(Math.ceil(base / 2), 2) : Math.max(Math.floor(base / 2), 1);
+
 const setsForWeek = (ex, week) => {
   const base = setCount(ex.s);
   const p = phaseForWeek(week);
   if (p === "bridge") return Math.max(base - 1, 1);
-  if (p === "deload") {
-    return ex.keep ? Math.max(Math.ceil(base / 2), 2) : Math.max(Math.floor(base / 2), 1);
-  }
+  // Week 7 protects the main barbell lifts; week 10 protects whatever is about
+  // to be tested. Those are different lists — leg press and incline press earn
+  // their sets before a squat and bench test, but not mid-block.
+  if (p === "midDeload") return halved(base, ex.mainLift);
+  if (p === "deload") return halved(base, ex.keep);
   return base;
 };
 
@@ -514,7 +550,7 @@ export default function TrainingLog() {
             </div>
           </div>
 
-          {!day.athletic && (
+          {(day.cue || !day.athletic) && (
             <div className="tl-banner">{day.cue || PHASE_CUE[phase]}</div>
           )}
 
@@ -634,7 +670,7 @@ export default function TrainingLog() {
             ))}
           </div>
           <div className="tl-phase">
-            <span className="tl-eyebrow">{PHASE_LABEL[phase]}</span>
+            <span className="tl-eyebrow">{phaseLabel(week)}</span>
           </div>
           {days.map((d) => (
             <div className="tl-card" key={d.id} onClick={() => setOpenDay(d.id)}>
@@ -646,6 +682,14 @@ export default function TrainingLog() {
               <div className="tl-chev">›</div>
             </div>
           ))}
+          {week >= 5 && week <= 8 && (
+            <div className="tl-banner">
+              Deload timing is a judgment call, not a date. If squat, bench or
+              trap-bar have gone backwards two weeks running, take it now instead
+              of waiting for week 7. If everything is still climbing and sleep has
+              held, push it to week 8. Don't skip it, and don't let it past week 8.
+            </div>
+          )}
           <div className="tl-banner">
             Miss a day? Drop Athletic. Never skip a lifting day to keep it.
           </div>

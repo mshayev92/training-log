@@ -1,7 +1,8 @@
 # Training log
 
 An offline-first PWA for a 10-week strength and athletic block: five sessions a
-week across two phases, a deload, and a retest. Log sets, bodyweight and gym
+week through a reintroduction, a bridge week, two build blocks split by a
+deload, and a deload into testing. Log sets, bodyweight and gym
 notes from a phone with no signal, then install it to the home screen so it
 opens like an app.
 
