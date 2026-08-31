@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
 /*
@@ -12,6 +13,17 @@ export default function UpdatePrompt() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW();
+
+  /*
+   * "Offline ready" is a courtesy, not a decision: it needs no answer and it
+   * overlaps the header, so it clears itself. The update prompt stays until
+   * it's answered.
+   */
+  useEffect(() => {
+    if (!offlineReady || needRefresh) return;
+    const t = setTimeout(() => setOfflineReady(false), 5000);
+    return () => clearTimeout(t);
+  }, [offlineReady, needRefresh, setOfflineReady]);
 
   if (!offlineReady && !needRefresh) return null;
 

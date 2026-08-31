@@ -7,39 +7,75 @@ const LIFT = "lift";
 const DO = "do";
 const TEST = "test";
 
+/*
+ * Ten weeks in four phases. Weeks 1-2 reintroduce the movements at
+ * deliberately submaximal loads, week 3 bridges into the Phase 1 exercise
+ * selection at one set fewer, weeks 4-9 build, week 10 deloads and retests.
+ *
+ * Day order follows the weekly template: the four lifting days Mon/Tue/Thu/Fri,
+ * then Athletic on Saturday. Athletic is last because it is the day college is
+ * allowed to take — never a lifting day.
+ */
+
 const PROGRAM = {
-  p0: [
+  intro: [
     {
-      id: "p0d1",
+      id: "introLowerA",
       name: "Lower A",
-      tag: "Squat emphasis",
+      tag: "Squat",
       ex: [
-        { id: "gsq", n: "Goblet squat", s: "3 × 8–10", t: LIFT, note: "Weeks 1–2. Grooves depth and bracing" },
-        { id: "bsq", n: "Back squat", s: "3 × 8", t: LIFT, note: "Add in week 2. Empty bar first. Set the safeties" },
-        { id: "dbrdl", n: "DB Romanian deadlift", s: "3 × 10", t: LIFT, note: "Light. Feel the hamstring stretch" },
-        { id: "lunge", n: "Walking lunge", s: "2 × 10/leg", t: LIFT },
+        { id: "bsq", n: "Back squat", s: "3 × 6–8", t: LIFT, note: "Empty bar week 1. Add weight in week 2 only if every rep looks the same. Safeties set at depth" },
+        { id: "dbrdl", n: "DB Romanian deadlift", s: "3 × 10", t: LIFT, note: "Light" },
+        { id: "lpress", n: "Leg press", s: "3 × 10–12", t: LIFT },
         { id: "lcurl", n: "Leg curl", s: "2 × 12", t: LIFT },
         { id: "calf", n: "Standing calf raise", s: "2 × 15", t: LIFT },
         { id: "plank", n: "Plank", s: "3 × 30–45s", t: DO },
       ],
     },
     {
-      id: "p0d2",
+      id: "introUpperA",
       name: "Upper A",
-      tag: "Horizontal push",
+      tag: "Press and vertical pull",
       ex: [
         { id: "dbbench", n: "DB bench press", s: "3 × 8–10", t: LIFT },
         { id: "dbohp", n: "Standing DB overhead press", s: "3 × 8–10", t: LIFT },
         { id: "csrow", n: "Chest-supported DB row", s: "3 × 10–12", t: LIFT },
+        { id: "pulldown", n: "Lat pulldown", s: "2 × 12", t: LIFT },
         { id: "lat", n: "Lateral raise", s: "2 × 12–15", t: LIFT },
         { id: "tpush", n: "Triceps pushdown", s: "2 × 12", t: LIFT },
-        { id: "pushup", n: "Push-ups", s: "2 × half max", t: LIFT },
       ],
     },
     {
-      id: "p0d3",
+      id: "introLowerB",
+      name: "Lower B",
+      tag: "Hinge",
+      ex: [
+        { id: "tbdl", n: "Trap-bar deadlift", s: "3 × 5", t: LIFT, note: "Light. Technique only" },
+        { id: "hacksq", n: "Leg press or hack squat", s: "3 × 10–12", t: LIFT },
+        { id: "dbsplit", n: "DB split squat", s: "2 × 8/leg", t: LIFT },
+        { id: "backext", n: "Back extension", s: "2 × 12", t: LIFT },
+        { id: "scalf", n: "Seated calf raise", s: "2 × 15", t: LIFT },
+        { id: "abwheel", n: "Ab wheel or cable crunch", s: "3 × 10", t: LIFT },
+      ],
+    },
+    {
+      id: "introUpperB",
+      name: "Upper B",
+      tag: "Pull and delts",
+      ex: [
+        { id: "pullup", n: "Pull-ups", s: "4 × half max", t: LIFT, note: "If your max is 8, do 4 × 4" },
+        { id: "brow", n: "Barbell row", s: "3 × 8–10", t: LIFT, note: "Your one well-coached barbell lift. Load it" },
+        { id: "incdb", n: "Incline DB press", s: "3 × 10", t: LIFT },
+        { id: "facepull", n: "Face pull", s: "2 × 15", t: LIFT },
+        { id: "dbcurl", n: "DB curl", s: "3 × 10–12", t: LIFT },
+        { id: "ohtri", n: "Overhead triceps extension", s: "2 × 12", t: LIFT },
+      ],
+    },
+    {
+      id: "introAth",
       name: "Athletic",
       tag: "Track + carries",
+      athletic: true,
       ex: [
         { id: "jog1", n: "Easy jog", s: "10 min", t: DO },
         { id: "drills", n: "A-skips, high knees, carioca", s: "2 × 20m each", t: DO },
@@ -48,41 +84,15 @@ const PROGRAM = {
         { id: "carry", n: "Farmer's carry", s: "4 × 30–40m", t: LIFT },
         { id: "hkr", n: "Hanging knee raise", s: "3 × 10", t: DO },
         { id: "splank", n: "Side plank", s: "2 × 30s/side", t: DO },
-        { id: "jog2", n: "Easy jog to finish", s: "10–12 min", t: DO },
-      ],
-    },
-    {
-      id: "p0d4",
-      name: "Lower B",
-      tag: "Hinge emphasis",
-      ex: [
-        { id: "tbdl", n: "Trap-bar deadlift", s: "3 × 5", t: LIFT, note: "Light. Technique only" },
-        { id: "lpress", n: "Leg press or hack squat", s: "3 × 10–12", t: LIFT },
-        { id: "stepup", n: "DB step-up or split squat", s: "2 × 8/leg", t: LIFT },
-        { id: "backext", n: "Back extension", s: "2 × 12", t: LIFT },
-        { id: "scalf", n: "Seated calf raise", s: "2 × 15", t: LIFT },
-        { id: "abwheel", n: "Ab wheel or cable crunch", s: "3 × 10", t: LIFT },
-      ],
-    },
-    {
-      id: "p0d5",
-      name: "Upper B",
-      tag: "Vertical pull",
-      ex: [
-        { id: "pullup", n: "Pull-ups", s: "4 × half max", t: LIFT, note: "If max is 8, do 4 × 4" },
-        { id: "brow", n: "Barbell row", s: "3 × 8–10", t: LIFT, note: "Your most familiar barbell lift" },
-        { id: "incdb", n: "Incline DB press", s: "3 × 10", t: LIFT },
-        { id: "facepull", n: "Face pull", s: "3 × 15", t: LIFT },
-        { id: "dbcurl", n: "DB curl", s: "3 × 10–12", t: LIFT },
-        { id: "ohtri", n: "Overhead triceps extension", s: "2 × 12", t: LIFT },
+        { id: "jog2", n: "Easy jog to finish", s: "10 min", t: DO },
       ],
     },
   ],
-  p1: [
+  build: [
     {
-      id: "p1d1",
+      id: "buildLowerA",
       name: "Lower A",
-      tag: "Squat emphasis",
+      tag: "Squat",
       ex: [
         { id: "bsq", n: "Back squat", s: "4 × 5–8", t: LIFT, rest: 180 },
         { id: "lpress", n: "Leg press", s: "3 × 10–12", t: LIFT, rest: 90 },
@@ -93,56 +103,60 @@ const PROGRAM = {
       ],
     },
     {
-      id: "p1d2",
+      id: "buildUpperA",
       name: "Upper A",
-      tag: "Horizontal push",
+      tag: "Press and vertical pull",
+      tip: "Superset the last three.",
       ex: [
-        { id: "bench", n: "Bench press", s: "4 × 5–8", t: LIFT, rest: 180, note: "Barbell in rack with safeties, or dumbbells" },
+        { id: "bench", n: "Bench press", s: "4 × 5–8", t: LIFT, rest: 180, note: "In a rack with safeties at chest height, or dumbbells. Never to failure" },
         { id: "incdb", n: "Incline DB press", s: "3 × 8–12", t: LIFT, rest: 90 },
-        { id: "csrow", n: "Chest-supported row", s: "4 × 8–12", t: LIFT, rest: 90 },
+        { id: "csrow", n: "Chest-supported row", s: "3 × 8–12", t: LIFT, rest: 90 },
+        { id: "pulldown", n: "Lat pulldown", s: "3 × 8–12", t: LIFT, rest: 90 },
         { id: "lat", n: "Lateral raise", s: "3 × 12–15", t: LIFT, rest: 45 },
-        { id: "fly", n: "Cable fly or pec deck", s: "2 × 12–15", t: LIFT, rest: 60 },
         { id: "tpush", n: "Triceps pushdown", s: "3 × 10–15", t: LIFT, rest: 45 },
+        { id: "dbcurl", n: "DB curl", s: "3 × 10–12", t: LIFT, rest: 45 },
       ],
     },
     {
-      id: "p1d3",
-      name: "Athletic",
-      tag: "Track + carries",
-      ex: [
-        { id: "jog1", n: "Warm-up jog + drills", s: "12 min", t: DO },
-        { id: "bjump", n: "Box jumps or broad jumps", s: "4 × 3", t: DO },
-        { id: "sprints", n: "Sprints", s: "8 × 60–80m @ 90%", t: DO, note: "Walk back recovery" },
-        { id: "sled", n: "Sled push or heavy carry", s: "4 × 30m", t: LIFT },
-        { id: "corecirc", n: "Core circuit", s: "3 rounds", t: DO, note: "Hanging leg raise, Pallof press, weighted sit-ups" },
-        { id: "jog2", n: "Optional easy jog or pool", s: "10 min", t: DO },
-      ],
-    },
-    {
-      id: "p1d4",
+      id: "buildLowerB",
       name: "Lower B",
-      tag: "Hinge emphasis",
+      tag: "Hinge",
       ex: [
-        { id: "tbdl", n: "Trap-bar deadlift", s: "3 × 5", t: LIFT, rest: 180 },
+        { id: "tbdl", n: "Trap-bar deadlift", s: "3 × 5", t: LIFT, rest: 180, note: "No chalk in RecWell. Mixed grip or straps — don't let this become grip training" },
         { id: "bss", n: "Bulgarian split squat", s: "3 × 8–10/leg", t: LIFT, rest: 90 },
         { id: "hthrust", n: "Hip thrust", s: "3 × 8–12", t: LIFT, rest: 90 },
-        { id: "backext", n: "Back extension", s: "3 × 12", t: LIFT, rest: 60 },
+        { id: "backext", n: "Back extension", s: "2 × 12", t: LIFT, rest: 60 },
         { id: "scalf", n: "Seated calf raise", s: "3 × 15", t: LIFT, rest: 45 },
         { id: "pallof", n: "Pallof press", s: "3 × 12/side", t: LIFT, rest: 45 },
       ],
     },
     {
-      id: "p1d5",
+      id: "buildUpperB",
       name: "Upper B",
-      tag: "Vertical pull",
+      tag: "Pull and delts",
+      tip: "Superset the last three.",
       ex: [
-        { id: "pullup", n: "Pull-ups", s: "4 × 5–8", t: LIFT, rest: 120, note: "Add weight once you can do 4 × 8 clean" },
-        { id: "ohp", n: "Overhead press", s: "4 × 6–10", t: LIFT, rest: 120 },
+        { id: "pullup", n: "Pull-ups", s: "4 × (max − 2)", t: LIFT, rest: 120, note: "Two short of failure every set. Add load once you can do 4 × 8 clean" },
+        { id: "dips", n: "Dips or flat DB press", s: "3 × 8–12", t: LIFT, rest: 90 },
+        { id: "ohp", n: "Overhead press", s: "3 × 6–10", t: LIFT, rest: 120 },
         { id: "brow", n: "Barbell row", s: "3 × 8–10", t: LIFT, rest: 90 },
-        { id: "pulldown", n: "Lat pulldown", s: "3 × 10–12", t: LIFT, rest: 60 },
-        { id: "dbcurl", n: "DB curl", s: "3 × 10–12", t: LIFT, rest: 45 },
-        { id: "hcurl", n: "Hammer curl", s: "2 × 12", t: LIFT, rest: 45 },
-        { id: "facepull", n: "Face pull", s: "3 × 15", t: LIFT, rest: 45 },
+        { id: "clat", n: "Cable lateral raise", s: "3 × 12–15", t: LIFT, rest: 45 },
+        { id: "hcurl", n: "Hammer curl", s: "3 × 12", t: LIFT, rest: 45 },
+        { id: "facepull", n: "Face pull", s: "2 × 15", t: LIFT, rest: 45 },
+      ],
+    },
+    {
+      id: "buildAth",
+      name: "Athletic",
+      tag: "Track + carries",
+      athletic: true,
+      ex: [
+        { id: "jog1", n: "Warm-up jog + drills", s: "12 min", t: DO },
+        { id: "bjump", n: "Box jumps or broad jumps", s: "4 × 3", t: DO },
+        { id: "sprints", n: "Sprints", s: "6 × 60m @ 85–90%", t: DO, note: "Weeks 4–6. Go to 8 × 60–80m in weeks 7–9 only if Monday squats aren't suffering" },
+        { id: "sled", n: "Sled push or heavy carry", s: "4 × 30m", t: LIFT },
+        { id: "corecirc", n: "Core circuit", s: "3 rounds", t: DO, note: "Hanging leg raise, Pallof press, weighted sit-ups" },
+        { id: "jog2", n: "Optional easy jog", s: "10 min", t: DO },
       ],
     },
   ],
@@ -151,7 +165,8 @@ const PROGRAM = {
 const RETEST = {
   id: "retest",
   name: "Retest",
-  tag: "Week 10",
+  tag: "Week 10 · Thu/Fri",
+  test: true,
   ex: [
     { id: "t_pullup", n: "Max strict pull-ups", s: "reps", t: TEST },
     { id: "t_pushup", n: "Push-ups in 2 min", s: "reps", t: TEST },
@@ -162,17 +177,57 @@ const RETEST = {
   ],
 };
 
-const phaseForWeek = (w) => (w <= 3 ? "p0" : w <= 9 ? "p1" : "deload");
+/* Every day that can appear in a log, for resolving history entries. */
+const ALL_DAYS = [...PROGRAM.intro, ...PROGRAM.build, RETEST];
+
+const phaseForWeek = (w) =>
+  w <= 2 ? "intro" : w === 3 ? "bridge" : w <= 9 ? "build" : "deload";
+
 const daysForWeek = (w) => {
   const p = phaseForWeek(w);
-  if (p === "p0") return PROGRAM.p0;
-  if (p === "p1") return PROGRAM.p1;
-  return [...PROGRAM.p1, RETEST];
+  if (p === "intro") return PROGRAM.intro;
+  // Week 10 is Mon-Wed at half volume, then the retest Thu/Fri.
+  if (p === "deload") return [...PROGRAM.build.slice(0, 3), RETEST];
+  return PROGRAM.build; // bridge runs the build selection, one set lighter
 };
+
+const PHASE_LABEL = {
+  intro: "Weeks 1–2 — Reintroduction",
+  bridge: "Week 3 — Bridge",
+  build: "Weeks 4–9 — Build",
+  deload: "Week 10 — Deload + retest",
+};
+
+const PHASE_CUE = {
+  intro:
+    "Every set ends with 3–4 reps left. You will feel underworked — that is the intent. Connective tissue adapts slower than muscle.",
+  bridge:
+    "Phase 1 exercises at one set fewer, still 3 RIR. The sets below are already reduced.",
+  build: "Compounds to ~2 reps in reserve. Accessories 1–2.",
+  deload: "Same weights, half the sets. The sets below are already halved.",
+};
+
 const setCount = (s) => {
   const m = s.match(/^(\d+)/);
   return m ? Math.min(parseInt(m[1], 10), 6) : 3;
 };
+
+/*
+ * Week 3 drops a set from every exercise and week 10 halves them. Doing that
+ * here rather than in a banner means the row count on screen is the work, so
+ * there's no arithmetic to get wrong mid-session.
+ */
+const daySetCount = (day, week) =>
+  day.ex.reduce((n, e) => n + (e.t === LIFT ? setsForWeek(e.s, week) : 0), 0);
+
+const setsForWeek = (scheme, week) => {
+  const base = setCount(scheme);
+  const p = phaseForWeek(week);
+  if (p === "bridge") return Math.max(base - 1, 1);
+  if (p === "deload") return Math.max(Math.ceil(base / 2), 1);
+  return base;
+};
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const fmtDate = (iso) => {
   const [y, m, d] = iso.split("-");
@@ -378,17 +433,15 @@ export default function TrainingLog() {
           <div className="tl-head">
             <button className="tl-back" onClick={() => setOpenDay(null)}>← All sessions</button>
             <div className="tl-title" style={{ marginTop: 8 }}>{day.name}</div>
-            <div className="tl-daytag">{day.tag} · Week {week} · {fmtDate(todayISO())}</div>
+            <div className="tl-daytag">
+              {day.tag}
+              {!day.athletic && !day.test && ` · ${daySetCount(day, week)} sets`}
+              {` · Week ${week} · ${fmtDate(todayISO())}`}
+            </div>
           </div>
 
-          {day.id !== "retest" && day.id.endsWith("d3") === false && (
-            <div className="tl-banner">
-              {phase === "p0"
-                ? "Stop every set with 3–4 reps left. This phase is tissue tolerance, not adaptation."
-                : phase === "deload"
-                ? "Deload: half the sets, same weight."
-                : "Last set of each compound at ~2 reps in reserve. Accessories 1–2."}
-            </div>
+          {!day.athletic && !day.test && (
+            <div className="tl-banner">{PHASE_CUE[phase]}</div>
           )}
 
           {day.ex.map((ex, i) => {
@@ -400,7 +453,7 @@ export default function TrainingLog() {
                   <div className="tl-exname">{ex.n}</div>
                   <div className="tl-scheme tl-mono">{ex.s}</div>
                 </div>
-                {i < 3 && day.id !== "retest" && (
+                {i < 3 && !day.athletic && !day.test && (
                   <div className="tl-eyebrow" style={{ marginTop: 6 }}>Core · keep if short on time</div>
                 )}
                 {ex.note && <div className="tl-exnote">{ex.note}</div>}
@@ -415,7 +468,7 @@ export default function TrainingLog() {
                 {ex.t === LIFT && (
                   <>
                     <div className="tl-sets">
-                      {Array.from({ length: setCount(ex.s) }).map((_, idx) => (
+                      {Array.from({ length: setsForWeek(ex.s, week) }).map((_, idx) => (
                         <div className="tl-setrow" key={idx}>
                           <div className="tl-setno tl-mono">{idx + 1}</div>
                           <input
@@ -471,6 +524,10 @@ export default function TrainingLog() {
             );
           })}
 
+          {day.tip && (
+            <div className="tl-banner" style={{ borderLeftColor: "var(--gold)" }}>{day.tip}</div>
+          )}
+
           <div style={{ padding: "18px" }}>
             <div className="tl-eyebrow" style={{ marginBottom: 8 }}>Session notes</div>
             <textarea
@@ -502,9 +559,7 @@ export default function TrainingLog() {
             ))}
           </div>
           <div className="tl-phase">
-            <span className="tl-eyebrow">
-              {phase === "p0" ? "Phase 0 — Reintroduction" : phase === "p1" ? "Phase 1 — Build" : "Deload + retest"}
-            </span>
+            <span className="tl-eyebrow">{PHASE_LABEL[phase]}</span>
           </div>
           {days.map((d) => (
             <div className="tl-card" key={d.id} onClick={() => setOpenDay(d.id)}>
@@ -516,6 +571,9 @@ export default function TrainingLog() {
               <div className="tl-chev">›</div>
             </div>
           ))}
+          <div className="tl-banner">
+            Miss a day? Drop Athletic. Never skip a lifting day to keep it.
+          </div>
           <div className="tl-banner" style={{ borderLeftColor: "var(--gold)" }}>
             No chalk or liquid grip anywhere in RecWell. Mixed grip or straps on heavy pulls.
           </div>
@@ -535,7 +593,7 @@ export default function TrainingLog() {
           {Object.entries(data.logs)
             .sort((a, b) => (a[1].date < b[1].date ? 1 : -1))
             .map(([k, l]) => {
-              const d = [...PROGRAM.p0, ...PROGRAM.p1, RETEST].find((x) => x.id === l.dayId);
+              const d = ALL_DAYS.find((x) => x.id === l.dayId);
               const open = openHist === k;
               const armed = armedDel === k;
               return (
@@ -552,8 +610,7 @@ export default function TrainingLog() {
                   {open && (
                     <div style={{ marginTop: 10 }}>
                       {Object.entries(l.ex || {}).map(([exId, e]) => {
-                        const meta = [...PROGRAM.p0, ...PROGRAM.p1, RETEST]
-                          .flatMap((x) => x.ex).find((x) => x.id === exId);
+                        const meta = ALL_DAYS.flatMap((x) => x.ex).find((x) => x.id === exId);
                         const sets = (e.sets || []).filter((s) => s.w || s.r);
                         if (!sets.length && !e.done) return null;
                         return (
